@@ -1,0 +1,312 @@
+<html><head><base href="." />
+<title>3D Shape Sequence Memory Game</title>
+<style>
+    body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: #1a1a1a;
+        font-family: Arial, sans-serif;
+        color: white;
+    }
+    .container {
+        text-align: center;
+        transform: translateY(-10%);
+    }
+    .game-area {
+        position: relative;
+        width: 500px;
+        height: 500px;
+        margin: 20px auto;
+        perspective: 1000px;
+    }
+    .shape {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform-style: preserve-3d;
+        transition: all 0.5s ease;
+    }
+    .btn {
+        padding: 12px 24px;
+        font-size: 18px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 10px;
+        transition: background 0.3s;
+    }
+    .btn:hover {
+        background: #45a049;
+    }
+    .score {
+        font-size: 24px;
+        margin: 20px;
+    }
+    .disabled {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+    .shape-btn {
+        padding: 15px 30px;
+        margin: 5px;
+        font-size: 16px;
+        background: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .shape-btn:hover {
+        background: #1976D2;
+    }
+    .hidden {
+        display: none;
+    }
+    .game-over {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 20px 40px;
+        border-radius: 10px;
+        font-size: 32px;
+        font-weight: bold;
+        z-index: 1000;
+        animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>3D Shape Sequence Memory Game</h1>
+    <div class="score">Score: <span id="score">0</span></div>
+    <div class="game-area" id="gameArea"></div>
+    <button id="startBtn" class="btn">Start Game</button>
+    <div id="shapeButtons" class="hidden">
+        <button class="shape-btn" data-shape="square">Square</button>
+        <button class="shape-btn" data-shape="star">Star</button>
+        <button class="shape-btn" data-shape="cylinder">Circle</button>
+    </div>
+    
+    <audio id="squareSound">
+        <source src="data:audio/wav;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAADAAAGhgBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVWqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr///////////////////////////////////////////8AAAA5TEFNRTMuOTlyAc0AAAAAAAAAABSAJAOkQgAAgAAABobXqlfKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//sQxAACInYEy1GMAQAAAAWgAAABOklSQ1kSWQNEgQ4kLJFAUMwk0QwwwBUOGIJhiyuKKIqOHCAoAwwPAuHiAVCgwQAiHihgDAUZoVBkEgGHAMHQEA4OGMKApgYGCgDDAF4cQBQIMDnA" type="audio/wav">
+    </audio>
+    <audio id="starSound">
+        <source src="data:audio/wav;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAADAAAGhgBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVWqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr///////////////////////////////////////////8AAAA5TEFNRTMuOTlyAc0AAAAAAAAAABSAJAOkQgAAgAAABobXznW3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" type="audio/wav">
+    </audio>
+    <audio id="cylinderSound">
+        <source src="data:audio/wav;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAADAAAGhgBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVWqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr///////////////////////////////////////////8AAAA5TEFNRTMuOTlyAc0AAAAAAAAAABSAJAOkQgAAgAAABobXznW3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" type="audio/wav">
+    </audio>
+    <audio id="gameOverSound">
+        <source src="data:audio/wav;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAAGhgBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVWqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqr///////////////////////////////////////////8AAAA5TEFNRTMuOTlyAc0AAAAAAAAAABSAJAOkQgAAgAAABobXznW3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" type="audio/wav">
+    </audio>
+</div>
+
+<script>
+const gameArea = document.getElementById('gameArea');
+const startBtn = document.getElementById('startBtn');
+const shapeButtons = document.getElementById('shapeButtons');
+const scoreElement = document.getElementById('score');
+
+// Audio elements
+const squareSound = document.getElementById('squareSound');
+const starSound = document.getElementById('starSound');
+const cylinderSound = document.getElementById('cylinderSound');
+const gameOverSound = document.getElementById('gameOverSound');
+
+// Function to play shape sound
+function playShapeSound(shape) {
+    squareSound.pause();
+    starSound.pause();
+    cylinderSound.pause();
+    
+    squareSound.currentTime = 0;
+    starSound.currentTime = 0;
+    cylinderSound.currentTime = 0;
+    
+    switch(shape) {
+        case 'square':
+            squareSound.volume = 0.3;
+            squareSound.playbackRate = 2.0; // Higher pitch
+            squareSound.play();
+            break;
+        case 'star':
+            starSound.volume = 0.3;
+            starSound.playbackRate = 2.5; // Higher pitch
+            starSound.play();
+            break;
+        case 'cylinder':
+            cylinderSound.volume = 0.3;
+            cylinderSound.playbackRate = 3.0; // Higher pitch
+            cylinderSound.play();
+            break;
+    }
+}
+
+function initAudio() {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    [squareSound, starSound, cylinderSound, gameOverSound].forEach(sound => {
+        sound.load();
+    });
+    
+    gameOverSound.volume = 0.4;
+    gameOverSound.playbackRate = 1.5; // Higher pitch for game over sound
+}
+
+let sequence = [];
+let playerSequence = [];
+let score = 0;
+let isPlaying = false;
+
+const shapesPhase1 = {
+    square: `<div style="width: 200px; height: 200px;">
+        <svg width="200" height="200" viewBox="0 0 200 200">
+            <rect x="10" y="10" width="180" height="180" 
+                  fill="#1a661a" stroke="#145214" stroke-width="4"/>
+        </svg>
+    </div>`,
+    star: `<svg width="200" height="200" viewBox="0 0 200 200">
+        <path d="M100 10 L122 70 L194 70 L136 114 L158 174 L100 140 L42 174 L64 114 L6 70 L78 70 Z" 
+              fill="#3333ff" 
+              stroke="#2d2d2d" 
+              stroke-width="4">
+        </path>
+    </svg>`,
+    cylinder: `<svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="90" 
+                fill="#ffcc00" 
+                stroke="#e6b800" 
+                stroke-width="4"/>
+    </svg>`
+};
+
+const shapesPhase2 = {
+    square: `<div style="width: 200px; height: 200px;">
+        <svg width="200" height="200" viewBox="0 0 200 200">
+            <rect x="10" y="10" width="180" height="180" 
+                  fill="#800080" stroke="#4B0082" stroke-width="4"/>
+        </svg>
+    </div>`,
+    star: `<svg width="200" height="200" viewBox="0 0 200 200">
+        <path d="M100 10 L122 70 L194 70 L136 114 L158 174 L100 140 L42 174 L64 114 L6 70 L78 70 Z" 
+              fill="#FFFDD0" 
+              stroke="#2d2d2d" 
+              stroke-width="4">
+        </path>
+    </svg>`,
+    cylinder: `<svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="90" 
+                fill="#8B4513" 
+                stroke="#6B4423" 
+                stroke-width="4"/>
+    </svg>`
+};
+
+let shapes = shapesPhase1;
+
+function showGameOver() {
+    const gameOverElement = document.createElement('div');
+    gameOverElement.className = 'game-over';
+    gameOverElement.textContent = 'GAME OVER!';
+    document.body.appendChild(gameOverElement);
+    gameOverSound.play();
+    setTimeout(() => {
+        gameOverElement.remove();
+    }, 2000);
+}
+
+function showShape(shape) {
+    gameArea.innerHTML = shapes[shape];
+    playShapeSound(shape);
+    setTimeout(() => {
+        gameArea.innerHTML = '';
+    }, 1000);
+}
+
+function playSequence() {
+    let i = 0;
+    const interval = setInterval(() => {
+        showShape(sequence[i]);
+        i++;
+        if (i >= sequence.length) {
+            clearInterval(interval);
+            setTimeout(() => {
+                shapeButtons.classList.remove('hidden');
+            }, 1000);
+        }
+    }, 1500);
+}
+
+function generateNewSequence() {
+    const shapeTypes = ['square', 'star', 'cylinder'];
+    sequence = [];
+    const length = score + 1; // Sequence length equals current score + 1
+    for(let i = 0; i < length; i++) {
+        const randomShape = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        sequence.push(randomShape);
+    }
+}
+
+startBtn.addEventListener('click', () => {
+    if (isPlaying) return;
+    
+    initAudio();
+    isPlaying = true;
+    sequence = [];
+    playerSequence = [];
+    score = 0;
+    scoreElement.textContent = score;
+    startBtn.classList.add('disabled');
+    shapes = shapesPhase1;
+    
+    generateNewSequence();
+    playSequence();
+});
+
+document.querySelectorAll('.shape-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        const selectedShape = button.dataset.shape;
+        playerSequence.push(selectedShape);
+        showShape(selectedShape);
+
+        if (playerSequence[playerSequence.length - 1] !== sequence[playerSequence.length - 1]) {
+            showGameOver();
+            isPlaying = false;
+            startBtn.classList.remove('disabled');
+            shapeButtons.classList.add('hidden');
+            return;
+        }
+
+        if (playerSequence.length === sequence.length) {
+            score++;
+            scoreElement.textContent = score;
+            
+            if (score === 4) {
+                shapes = shapesPhase2;
+            }
+            
+            playerSequence = [];
+            shapeButtons.classList.add('hidden');
+            
+            setTimeout(() => {
+                generateNewSequence();
+                playSequence();
+            }, 1000);
+        }
+    });
+});
+</script>
+</body>
+</html>
